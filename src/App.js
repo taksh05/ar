@@ -142,6 +142,8 @@ const ArView = () => {
   // Debug overlay state and helpers
   const [diagLines, setDiagLines] = React.useState([]);
   const pushDiag = (msg) => setDiagLines(d => [...d, `${new Date().toISOString()} - ${msg}`]);
+  const [loadProgress, setLoadProgress] = React.useState(0);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     // global error capture
@@ -199,12 +201,20 @@ const ArView = () => {
 
     // attach events to model-viewer if present
     if (mv) {
-      const onLoad = () => pushDiag('model-viewer: load event fired');
+      const onLoad = () => {
+        pushDiag('model-viewer: load event fired');
+        setIsLoading(false);
+        setLoadProgress(100);
+      };
       const onErrorEvent = (e) => pushDiag(`model-viewer error event: ${e && e.detail ? JSON.stringify(e.detail) : String(e)}`);
       mv.addEventListener('load', onLoad);
       mv.addEventListener('error', onErrorEvent);
       // progress may help on slow devices
-      mv.addEventListener('progress', (p) => pushDiag(`model-viewer progress: ${p && p.detail ? JSON.stringify(p.detail) : String(p)}`));
+      mv.addEventListener('progress', (p) => {
+        const progress = p && p.detail && p.detail.totalProgress !== undefined ? p.detail.totalProgress : 0;
+        setLoadProgress(Math.round(progress * 100));
+        pushDiag(`model-viewer progress: ${p && p.detail ? JSON.stringify(p.detail) : String(p)}`);
+      });
 
       return () => {
         window.removeEventListener('error', onError);
@@ -277,14 +287,26 @@ const ArView = () => {
         <button slot="ar-button" style={{ display: 'none' }} aria-hidden="true"></button>
       </model-viewer>
 
-  <div className="ar-launch-overlay">
+      <div className="ar-launch-overlay">
+        {isLoading && (
+          <div className="loading-indicator">
+            <div className="loading-bar-container">
+              <div className="loading-bar" style={{ width: `${loadProgress}%` }}></div>
+            </div>
+            <div className="loading-text">Downloading 3D model... {loadProgress}%</div>
+            <div className="loading-hint">Large file (74 MB) — may take 30-60s on mobile data</div>
+          </div>
+        )}
+        
         <div className="ar-instructions">
           <div className="ar-title">Place the car in your room</div>
           <div className="ar-copy">Point your camera at a flat surface and tap "Place in room". Move slowly to help the device detect the floor.</div>
         </div>
 
         <div className="ar-buttons">
-          <button className="ar-launch-button" onClick={openAR}>Place in room (AR)</button>
+          <button className="ar-launch-button" onClick={openAR} disabled={isLoading}>
+            {isLoading ? 'Loading model...' : 'Place in room (AR)'}
+          </button>
           <button className="btn btn-outline" onClick={() => window.location.href = '#/vr'}>Enter VR</button>
           <button className="btn btn-secondary" onClick={() => window.location.href = '#/'}>360 View</button>
         </div>
