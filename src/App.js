@@ -196,13 +196,31 @@ const VRShowroom = () => {
     document.body.appendChild(script);
     // add listener when A-Frame has loaded to debug model loading
     const onLoaded = () => {
-      const carEl = document.querySelector('#carEntity');
-      if (carEl) {
-        carEl.addEventListener('model-loaded', () => {
-          console.log('GLB model loaded');
-          // make sure it's visible
-          carEl.setAttribute('visible', 'true');
-        });
+      // Wait for a-scene to be parsed, then attach model-loaded handler
+      const scene = document.querySelector('a-scene');
+      if (scene) {
+        const onSceneLoaded = () => {
+          const carEl = document.querySelector('#carEntity');
+          if (carEl) {
+            carEl.addEventListener('model-loaded', () => {
+              console.log('GLB model loaded');
+              carEl.setAttribute('visible', 'true');
+            });
+            // If the model is already cached/loaded, ensure visibility
+            setTimeout(() => {
+              const isLoaded = carEl.getAttribute('gltf-model');
+              carEl.setAttribute('visible', 'true');
+            }, 500);
+          } else {
+            // try again shortly
+            setTimeout(() => {
+              const retry = document.querySelector('#carEntity');
+              if (retry) retry.setAttribute('visible', 'true');
+            }, 800);
+          }
+        };
+
+        if (scene.hasLoaded) onSceneLoaded(); else scene.addEventListener('loaded', onSceneLoaded, { once: true });
       }
     };
 
@@ -219,12 +237,10 @@ const VRShowroom = () => {
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <a-scene>
-        <a-assets>
-          <a-asset-item id="car" src="/models/porsche.glb"></a-asset-item>
-        </a-assets>
         <a-sky color="#050505"></a-sky>
         <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#111"></a-plane>
-  <a-entity id="carEntity" gltf-model="#car" position="0 0 -4" scale="2 2 2" visible="false" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
+        {/* Load glb directly on the entity to simplify loading and avoid asset-item issues */}
+        <a-entity id="carEntity" gltf-model="/models/porsche.glb" position="0 0 -3" scale="1.6 1.6 1.6" visible="false" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
         <a-light type="ambient" intensity="0.3"></a-light>
         <a-light type="point" position="2 4 -3" intensity="1"></a-light>
         <a-camera position="0 1.6 0"></a-camera>
