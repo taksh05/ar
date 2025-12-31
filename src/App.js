@@ -15,6 +15,7 @@ const Home = () => {
     const ua = navigator.userAgent || '';
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua));
   }, []);
+  
 
   const arUrl =
     typeof window !== 'undefined'
@@ -32,7 +33,7 @@ const Home = () => {
           <model-viewer
             src="/models/porsche.glb"
             ios-src="/models/porsche.usdz"
-            alt="1975 Porsche 911"
+            alt="droen model"
             ar
             ar-modes="webxr scene-viewer quick-look"
             camera-controls
@@ -100,13 +101,14 @@ const ArView = () => {
       <model-viewer
         src="/models/porsche.glb"
         ios-src="/models/porsche.usdz"
-        alt="1975 Porsche 911"
+        alt="drone model"
         ar
         ar-modes="webxr scene-viewer quick-look"
         camera-controls
-        environment-image="neutral"
+        environment-image=""
         shadow-intensity="2"
-        exposure="1"
+        shadow-softness="0.5"
+        exposure="0.05"
         style={{ width: '100%', height: '100%' }}
       >
         {/* SAME AR BUTTON FOR QR + PHONE */}
