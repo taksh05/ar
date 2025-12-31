@@ -7,6 +7,7 @@ import QRCode from 'react-qr-code';
 const Home = () => {
   const [showQR, setShowQR] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [autoARTriggered, setAutoARTriggered] = useState(false);
 
   useEffect(() => {
     // basic device detection: mobile or tablet
@@ -15,6 +16,56 @@ const Home = () => {
     const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
     setIsMobile(mobileRegex.test(ua) || touch || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer:coarse)').matches));
   }, []);
+
+  // Auto-launch AR on mobile/tablet without asking (best-effort).
+  useEffect(() => {
+    if (!isMobile || autoARTriggered) return;
+    // Wait a moment for model-viewer to initialize
+    const t = setTimeout(() => {
+      try {
+        const mv = document.querySelector('model-viewer');
+        // Try to trigger the built-in AR flow by clicking the AR button if present
+        let arBtn = null;
+        if (mv) {
+          // model-viewer may render the AR button in light DOM slot or in shadow DOM
+          arBtn = mv.querySelector('[slot="ar-button"]') || mv.querySelector('button[slot="ar-button"]');
+          // try shadowRoot if needed
+          try {
+            if (!arBtn && mv.shadowRoot) {
+              arBtn = mv.shadowRoot.querySelector('[slot="ar-button"]') || mv.shadowRoot.querySelector('button[slot="ar-button"]');
+            }
+          } catch (e) {
+            // ignore shadow access errors
+          }
+        }
+
+        if (arBtn) {
+          arBtn.click();
+          setAutoARTriggered(true);
+          return;
+        }
+
+        // Fallback: open platform-specific direct link
+        const ua = navigator.userAgent || '';
+        const origin = window.location.origin;
+        if (/iPhone|iPad|iPod/i.test(ua)) {
+          // open USDZ in same tab to trigger Quick Look
+          window.location.href = `${origin}/models/porsche.usdz`;
+          setAutoARTriggered(true);
+          return;
+        }
+
+        // Android: try Scene Viewer intent
+        const sceneIntent = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(origin + '/models/porsche.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end`;
+        window.location.href = sceneIntent;
+        setAutoARTriggered(true);
+      } catch (err) {
+        console.warn('Auto AR trigger failed', err);
+      }
+    }, 1200);
+
+    return () => clearTimeout(t);
+  }, [isMobile, autoARTriggered]);
 
   return (
     <div className="app-container">
