@@ -205,3 +205,114 @@ model-viewer {
   font-size: 0.85rem;
   text-align: center;
 }
+/* Responsive Layout - Desktop: Side by Side, Mobile: Stacked */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  gap: 20px;
+}
+
+.model-section {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 400px;
+}
+
+.controls-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Desktop Layout: Model left, Controls right */
+@media (min-width: 1024px) {
+  .content-wrapper {
+    flex-direction: row;
+    align-items: stretch;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px;
+    gap: 40px;
+    min-height: calc(100vh - 120px);
+  }
+
+  .model-section {
+    flex: 1;
+    width: auto;
+    height: auto;
+    min-height: 600px;
+  }
+
+  .controls-section {
+    flex: 0 0 300px;
+    width: 300px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .controls button {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 16px;
+  }
+}
+
+/* Tablet Layout: Keep stacked */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .model-section {
+    height: 60vh;
+    max-width: 800px;
+  }
+
+  .controls-section {
+    max-width: 800px;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .controls button {
+    flex: 1;
+    padding: 14px 20px;
+  }
+}
+
+/* Mobile Layout: Stacked (default above) */
+@media (max-width: 767px) {
+  .content-wrapper {
+    padding: 15px;
+  }
+
+  .model-section {
+    height: 50vh;
+    min-height: 350px;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .controls button {
+    width: 100%;
+    padding: 12px 20px;
+  }
+}

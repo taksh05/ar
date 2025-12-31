@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '@google/model-viewer';
 import QRCode from 'react-qr-code';
 
@@ -8,37 +8,128 @@ const PorscheViewer = () => {
   const defaultArQr = (typeof window !== 'undefined' ? window.location.origin + '/#/ar' : '/#/ar');
   const [qrValue, setQrValue] = useState(defaultArQr);
   const [detectStatus, setDetectStatus] = useState('');
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const modelRef = useRef(null);
+  const observerRef = useRef(null);
+
+  // Prefetch models on page load (downloads in background)
+  useEffect(() => {
+    // Start downloading models immediately in background
+    const prefetchModel = (url) => {
+      fetch(url, { mode: 'no-cors' }).catch(() => {});
+    };
+    
+    // Prefetch after a short delay to not block initial render
+    const timer = setTimeout(() => {
+      prefetchModel('/models/porsche.glb');
+      prefetchModel('/models/porsche.usdz');
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Lazy loading: only show model when it comes into viewport
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observerRef.current?.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (modelRef.current) {
+      observerRef.current.observe(modelRef.current);
+    }
+
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // Track loading progress
+  useEffect(() => {
+    const modelViewer = modelRef.current;
+    if (!modelViewer) return;
+
+    const handleProgress = (event) => {
+      const progress = event.detail.totalProgress * 100;
+      setLoadingProgress(Math.round(progress));
+    };
+
+    const handleLoad = () => {
+      setIsLoaded(true);
+      setLoadingProgress(100);
+    };
+
+    modelViewer.addEventListener('progress', handleProgress);
+    modelViewer.addEventListener('load', handleLoad);
+
+    return () => {
+      modelViewer.removeEventListener('progress', handleProgress);
+      modelViewer.removeEventListener('load', handleLoad);
+    };
+  }, [isVisible]);
 
   return (
     <div className="main-container">
       <nav className="navbar">911 TURBO EXPERIENCE</nav>
       
-      <model-viewer
-        src="/models/porsche.glb"
-        ios-src="/models/porsche.usdz"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        auto-rotate
-        shadow-intensity="2"
-        environment-image="neutral"
-        exposure="1.2"
-        style={{ width: '100%', height: '70vh', background: '#000' }}
-      >
-        <button slot="ar-button" className="ar-button">VIEW IN AR</button>
-      </model-viewer>
+      <div className="content-wrapper">
+        <div ref={modelRef} className="model-section">
+          {!isLoaded && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              color: '#fff',
+              zIndex: 10
+            }}>
+              <div style={{ fontSize: '18px', marginBottom: '10px' }}>Loading Model...</div>
+              <div style={{ width: '200px', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ width: `${loadingProgress}%`, height: '100%', background: '#0af', transition: 'width 0.3s' }}></div>
+              </div>
+              <div style={{ fontSize: '14px', marginTop: '5px' }}>{loadingProgress}%</div>
+            </div>
+          )}
+          <model-viewer
+            src={isVisible ? "/models/porsche.glb" : undefined}
+            ios-src={isVisible ? "/models/porsche.usdz" : undefined}
+            poster="https://via.placeholder.com/800x600/000000/FFFFFF/?text=Porsche+911"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            camera-controls
+            auto-rotate
+            auto-rotate-delay="1000"
+            rotation-per-second="30deg"
+            shadow-intensity="1"
+            environment-image="neutral"
+            exposure="1"
+            loading="eager"
+            reveal="auto"
+            interaction-prompt="none"
+            style={{ width: '100%', height: '100%', background: '#000' }}
+          >
+            <button slot="ar-button" className="ar-button">VIEW IN AR</button>
+          </model-viewer>
+        </div>
 
-      {/* Fallback direct link for iOS Quick Look: some phones/browsers open the USDZ directly
-          If you're testing from a different device, make sure the site is reachable (use ngrok/localtunnel or serve on LAN). */}
-      <a id="ar-link" rel="ar" href="/models/porsche.usdz" style={{ display: 'none' }} aria-hidden="true">Open in AR</a>
-
-      <div className="controls">
-        <button onClick={() => setShowQR(!showQR)} className="btn-secondary">
-          {showQR ? "Hide QR" : "Scan for AR"}
-        </button>
-        <button onClick={() => window.location.href='/vr'} className="btn-primary">
-          Enter VR Showroom
-        </button>
+        <div className="controls-section">
+          <div className="controls">
+            <button onClick={() => setShowQR(!showQR)} className="btn-secondary">
+              {showQR ? "Hide QR" : "Scan for AR"}
+            </button>
+            <button onClick={() => window.location.href='/vr'} className="btn-primary">
+              Enter VR Showroom
+            </button>
+          </div>
+        </div>
       </div>
 
       {showQR && (

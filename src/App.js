@@ -75,64 +75,69 @@ const Home = () => {
         <h1>Porsche 911 Turbo</h1>
       </header>
 
-      <model-viewer
-        src="/models/porsche.glb"
-        ios-src="/models/porsche.usdz"
-        alt="1975 Porsche 911"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        auto-rotate
-        shadow-intensity="2"
-        environment-image="neutral"
-        exposure="1"
-      >
-        {/* If on mobile/tablet, show the built-in AR button so users can launch AR directly.
-            On desktop we keep the AR button hidden and surface a QR instead. */}
-        {isMobile ? (
-          <button slot="ar-button" className="btn btn-primary">VIEW IN AR</button>
-        ) : (
-          <button slot="ar-button" style={{ display: 'none' }}></button>
-        )}
-      </model-viewer>
-
-      {/* Fallback buttons removed: mobile/tablet will auto-launch AR; desktop uses QR */}
-
-      <div className="controls-row">
-        {isMobile ? (
-          // On mobile/tablet show direct AR instruction and hide QR
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{ color: '#ddd' }}>Tap <strong>VIEW IN AR</strong> to open AR on your device</div>
-            <Link to="/vr">
-              <button className="btn btn-primary">Launch VR</button>
-            </Link>
-            <Link to="/products">
-              <button className="btn btn-outline">View Products</button>
-            </Link>
-          </div>
-        ) : (
-          // Desktop: show QR button and VR link
-          <>
-            <button className="btn btn-outline" onClick={() => setShowQR(!showQR)}>
-              {showQR ? "Close QR" : "Scan for AR"}
-            </button>
-            <Link to="/vr">
-              <button className="btn btn-primary">Launch VR</button>
-            </Link>
-            <Link to="/products">
-              <button className="btn btn-outline">Products</button>
-            </Link>
-          </>
-        )}
-      </div>
-
-        {!isMobile && showQR && (
-        <div className="qr-container">
-          <p style={{ marginBottom: '10px' }}>Scan to view in your room</p>
-          {/* Use a hash route so direct navigation from a QR works on static hosts without server-side rewrites */}
-          <QRCode value={(typeof window !== 'undefined' ? window.location.origin : '') + '/#/ar'} size={150} />
+      <div className="content-wrapper">
+        <div className="model-section">
+          <model-viewer
+            src="/models/porsche.glb"
+            ios-src="/models/porsche.usdz"
+            alt="1975 Porsche 911"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            camera-controls
+            auto-rotate
+            shadow-intensity="2"
+            environment-image="neutral"
+            exposure="1"
+            style={{ width: '100%', height: '100%' }}
+          >
+            {/* If on mobile/tablet, show the built-in AR button so users can launch AR directly.
+                On desktop we keep the AR button hidden and surface a QR instead. */}
+            {isMobile ? (
+              <button slot="ar-button" className="btn btn-primary">VIEW IN AR</button>
+            ) : (
+              <button slot="ar-button" style={{ display: 'none' }}></button>
+            )}
+          </model-viewer>
         </div>
-      )}
+
+        <div className="controls-section">
+          <div className="controls-row">
+            {isMobile ? (
+              // On mobile/tablet show direct AR instruction
+              <>
+                <div style={{ color: '#ddd', marginBottom: '15px', textAlign: 'center' }}>Tap <strong>VIEW IN AR</strong> to open AR on your device</div>
+                <Link to="/vr" style={{ width: '100%' }}>
+                  <button className="btn btn-primary" style={{ width: '100%' }}>Launch VR</button>
+                </Link>
+                <Link to="/products" style={{ width: '100%' }}>
+                  <button className="btn btn-outline" style={{ width: '100%' }}>View Products</button>
+                </Link>
+              </>
+            ) : (
+              // Desktop: show buttons vertically
+              <>
+                <button className="btn btn-outline" onClick={() => setShowQR(!showQR)} style={{ width: '100%' }}>
+                  {showQR ? "Close QR" : "Scan for AR"}
+                </button>
+                <Link to="/vr" style={{ width: '100%' }}>
+                  <button className="btn btn-primary" style={{ width: '100%' }}>Launch VR</button>
+                </Link>
+                <Link to="/products" style={{ width: '100%' }}>
+                  <button className="btn btn-outline" style={{ width: '100%' }}>Products</button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          {!isMobile && showQR && (
+            <div className="qr-container" style={{ marginTop: '20px' }}>
+              <p style={{ marginBottom: '10px', color: '#000' }}>Scan to view in your room</p>
+              {/* Use a hash route so direct navigation from a QR works on static hosts without server-side rewrites */}
+              <QRCode value={(typeof window !== 'undefined' ? window.location.origin : '') + '/#/ar'} size={150} />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
