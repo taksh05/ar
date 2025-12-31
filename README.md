@@ -68,3 +68,36 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Deploying to Vercel (quick)
+
+You can deploy this Create React App to Vercel as a static site. Vercel will run `npm run build` and serve the contents of the `build/` folder.
+
+Two common ways:
+
+- Git integration (recommended for continuous deploys):
+  1. Push your repository to GitHub/GitLab/Bitbucket.
+ 2. Sign in to https://vercel.com and import the repository.
+ 3. Vercel detects Create React App and uses `npm run build`. Deploy.
+
+- CLI (quick one-off deploy):
+  1. Install the Vercel CLI (optional):
+	  ```powershell
+	  npm i -g vercel
+	  # or use npx
+	  npx vercel login
+	  ```
+  2. From the project root run:
+	  ```powershell
+	  npm run build
+	  npx vercel --prod
+	  ```
+
+Notes specific to AR models in `/public/models`:
+- Some clients (Quick Look / Scene Viewer) depend on Content-Type headers for .usdz and .glb. To ensure Vercel serves correct MIME types we've added a `vercel.json` that sets headers for these assets. If you use a different host, please ensure `.usdz` is served with a suitable Content-Type (for example `model/vnd.usdz+zip`) and `.glb` as `model/gltf-binary`.
+
+Troubleshooting:
+- If a phone shows "site can't be reached" after scanning a QR, ensure the QR points to the deployed HTTPS URL (not `localhost`).
+- For iOS Quick Look prefer an HTTPS URL.
+
+If you'd like, I can run through the GitHub→Vercel import flow step-by-step, or create a small `deploy.sh`/PowerShell script to run the build + `vercel --prod` for you (you'll need to authenticate with Vercel interactively). 

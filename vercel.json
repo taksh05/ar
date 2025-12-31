@@ -1,0 +1,16 @@
+{
+  "headers": [
+    {
+      "source": "/models/:all*.usdz",
+      "headers": [
+        { "key": "Content-Type", "value": "model/vnd.usdz+zip" }
+      ]
+    },
+    {
+      "source": "/models/:all*.glb",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" }
+      ]
+    }
+  ]
+}
