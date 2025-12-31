@@ -6,6 +6,7 @@ import ProductGrid from './components/ProductGrid';
 import ProductDetail from './components/ProductDetail';
 
 // --- MAIN 360 & AR COMPONENT ---
+// This is your website. It allows users to browse before opening AR.
 const Home = () => {
   const [showQR, setShowQR] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -16,8 +17,6 @@ const Home = () => {
     const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
     setIsMobile(mobileRegex.test(ua) || touch || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer:coarse)').matches));
   }, []);
-
-  // NOTE: Auto-launch logic removed to prevent bypassing the website on mobile.
 
   return (
     <div className="app-container">
@@ -90,27 +89,34 @@ const Home = () => {
 };
 
 // --- AR shortcut page (Direct entry used by QR and Mobile Button) ---
+// THIS PAGE AUTO-TRIGGERS THE AR CAMERA
 const ArView = () => {
-  const [diagLines, setDiagLines] = useState([]);
-  const [loadProgress, setLoadProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-  const pushDiag = (msg) => setDiagLines(d => [...d, `${new Date().toISOString()} - ${msg}`]);
 
   useEffect(() => {
     const mv = document.querySelector('#ar-model');
+    
+    const handleAutoLaunch = () => {
+      setIsLoading(false);
+      
+      // Force the AR camera to open automatically after a split second
+      setTimeout(() => {
+        let arBtn = mv.querySelector('button[slot="ar-button"]') || 
+                   (mv.shadowRoot && mv.shadowRoot.querySelector('button[slot="ar-button"]'));
+        if (arBtn) {
+          arBtn.click();
+        }
+      }, 600);
+    };
+
     if (mv) {
-      const onLoad = () => {
-        setIsLoading(false);
-        setLoadProgress(100);
-      };
-      mv.addEventListener('load', onLoad);
-      return () => mv.removeEventListener('load', onLoad);
+      mv.addEventListener('load', handleAutoLaunch);
+      return () => mv.removeEventListener('load', handleAutoLaunch);
     }
   }, []);
 
   const openAR = () => {
-    const mv = document.querySelector('model-viewer');
+    const mv = document.querySelector('#ar-model');
     if (mv) {
       let arBtn = mv.querySelector('button[slot="ar-button"]') || (mv.shadowRoot && mv.shadowRoot.querySelector('button[slot="ar-button"]'));
       if (arBtn) arBtn.click();
@@ -130,9 +136,12 @@ const ArView = () => {
       >
         <button slot="ar-button" style={{ display: 'none' }}></button>
       </model-viewer>
-      <div className="ar-launch-overlay" style={{ position: 'absolute', bottom: 20, width: '100%', textAlign: 'center' }}>
+      <div className="ar-launch-overlay" style={{ position: 'absolute', bottom: 40, width: '100%', textAlign: 'center' }}>
+        <h2 style={{ color: 'white', marginBottom: '15px' }}>
+            {isLoading ? 'Loading Drone...' : 'Opening Camera...'}
+        </h2>
         <button className="btn btn-primary" onClick={openAR} disabled={isLoading}>
-          {isLoading ? 'Loading...' : 'Place in room (AR)'}
+          {isLoading ? 'Please Wait' : 'Place in room (AR)'}
         </button>
       </div>
     </div>
@@ -154,8 +163,8 @@ const VRShowroom = () => {
 
   return (
     <div id="vr-container">
-        {/* Simplified VR implementation or redirect to A-Frame scene */}
         <p style={{color: 'white', padding: '20px'}}>VR Library Loading...</p>
+        <Link to="/"><button className="btn btn-outline">Back Home</button></Link>
     </div>
   );
 };
