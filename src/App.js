@@ -6,6 +6,15 @@ import QRCode from 'react-qr-code';
 // --- MAIN 360 & AR COMPONENT ---
 const Home = () => {
   const [showQR, setShowQR] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // basic device detection: mobile or tablet
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+    const mobileRegex = /Mobi|Android|iPhone|iPad|iPod|Tablet/i;
+    const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
+    setIsMobile(mobileRegex.test(ua) || touch || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer:coarse)').matches));
+  }, []);
 
   return (
     <div className="app-container">
@@ -25,7 +34,13 @@ const Home = () => {
         environment-image="neutral"
         exposure="1"
       >
-        <button slot="ar-button" style={{display: 'none'}}></button>
+        {/* If on mobile/tablet, show the built-in AR button so users can launch AR directly.
+            On desktop we keep the AR button hidden and surface a QR instead. */}
+        {isMobile ? (
+          <button slot="ar-button" className="btn btn-primary">VIEW IN AR</button>
+        ) : (
+          <button slot="ar-button" style={{ display: 'none' }}></button>
+        )}
       </model-viewer>
 
       {/* Fallback / direct AR links for single-tap testing */}
@@ -53,17 +68,30 @@ const Home = () => {
       </div>
 
       <div className="controls-row">
-        <button className="btn btn-outline" onClick={() => setShowQR(!showQR)}>
-          {showQR ? "Close QR" : "Scan for AR"}
-        </button>
-        <Link to="/vr">
-          <button className="btn btn-primary">Launch VR</button>
-        </Link>
+        {isMobile ? (
+          // On mobile/tablet show direct AR instruction and hide QR
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ color: '#ddd' }}>Tap <strong>VIEW IN AR</strong> to open AR on your device</div>
+            <Link to="/vr">
+              <button className="btn btn-primary">Launch VR</button>
+            </Link>
+          </div>
+        ) : (
+          // Desktop: show QR button and VR link
+          <>
+            <button className="btn btn-outline" onClick={() => setShowQR(!showQR)}>
+              {showQR ? "Close QR" : "Scan for AR"}
+            </button>
+            <Link to="/vr">
+              <button className="btn btn-primary">Launch VR</button>
+            </Link>
+          </>
+        )}
       </div>
 
-      {showQR && (
+      {!isMobile && showQR && (
         <div className="qr-container">
-          <p style={{marginBottom: '10px'}}>Scan to view in your room</p>
+          <p style={{ marginBottom: '10px' }}>Scan to view in your room</p>
           <QRCode value={window.location.href} size={150} />
         </div>
       )}
