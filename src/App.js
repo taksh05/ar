@@ -11,7 +11,6 @@ const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Basic device detection
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
     const mobileRegex = /Mobi|Android|iPhone|iPad|iPod|Tablet/i;
     const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
@@ -39,7 +38,6 @@ const Home = () => {
             exposure="1"
             style={{ width: '100%', height: '100%' }}
           >
-            {/* On mobile home, button leads to the auto-trigger AR page */}
             {isMobile ? (
               <Link to="/ar" slot="ar-button" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block', padding: '10px 20px' }}>
                 VIEW IN AR
@@ -89,81 +87,61 @@ const Home = () => {
   );
 };
 
-// --- AR AUTO-TRIGGER PAGE (Used by QR code and mobile button) ---
+// --- AR AUTO-TRIGGER PAGE (Matches Phone Viewer Exactly) ---
 const ArView = () => {
-  const [diagLines, setDiagLines] = useState([]);
-  const [loadProgress, setLoadProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-  const pushDiag = (msg) => setDiagLines(d => [...d, `${new Date().toISOString()} - ${msg}`]);
 
   useEffect(() => {
     const mv = document.querySelector('#ar-model');
     
-    // logic to automatically click the AR button when the model is ready
     const handleAutoTrigger = () => {
       setIsLoading(false);
-      setLoadProgress(100);
-      pushDiag('Model loaded - triggering AR');
       
+      // Automatic trigger for the AR camera
       setTimeout(() => {
         let arBtn = mv.querySelector('button[slot="ar-button"]') || 
                    (mv.shadowRoot && mv.shadowRoot.querySelector('button[slot="ar-button"]'));
         if (arBtn) {
           arBtn.click();
         }
-      }, 800); // 800ms delay to ensure device is ready for intent
+      }, 500); 
     };
 
     if (mv) {
       mv.addEventListener('load', handleAutoTrigger);
-      mv.addEventListener('progress', (p) => {
-        const progress = p?.detail?.totalProgress || 0;
-        setLoadProgress(Math.round(progress * 100));
-      });
       return () => mv.removeEventListener('load', handleAutoTrigger);
     }
   }, []);
 
-  const openAR = () => {
-    const mv = document.querySelector('#ar-model');
-    if (mv) {
-      let arBtn = mv.querySelector('button[slot="ar-button"]') || (mv.shadowRoot && mv.shadowRoot.querySelector('button[slot="ar-button"]'));
-      if (arBtn) arBtn.click();
-    }
-  };
-
   return (
-    <div className="ar-viewer-container" style={{ height: '100vh', background: '#000' }}>
-      <model-viewer
-        id="ar-model"
-        src="/models/porsche.glb"
-        ios-src="/models/porsche.usdz"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        style={{ width: '100%', height: '100%' }}
-      >
-        <button slot="ar-button" style={{ display: 'none' }} aria-hidden="true"></button>
-      </model-viewer>
-
-      <div className="ar-launch-overlay" style={{ position: 'absolute', bottom: 40, width: '100%', textAlign: 'center', color: 'white' }}>
-        {isLoading ? (
-          <div>
-            <p>Downloading 3D Model: {loadProgress}%</p>
-            <div style={{ width: '200px', height: '5px', background: '#333', margin: '10px auto' }}>
-              <div style={{ width: `${loadProgress}%`, height: '100%', background: '#007bff' }} />
-            </div>
-          </div>
-        ) : (
-          <div>
-            <h2 style={{ marginBottom: '10px' }}>Opening AR Camera...</h2>
-            <button className="btn btn-primary" onClick={openAR}>
-              Place in room (AR)
-            </button>
-          </div>
-        )}
+    <div className="app-container" style={{ height: '100vh', background: '#000' }}>
+      <div className="model-section" style={{ height: '100vh', width: '100vw' }}>
+        <model-viewer
+          id="ar-model"
+          src="/models/porsche.glb"
+          ios-src="/models/porsche.usdz"
+          alt="1975 Porsche 911"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          camera-controls
+          auto-rotate
+          shadow-intensity="2"
+          environment-image="neutral"
+          exposure="1"
+          style={{ width: '100%', height: '100%' }}
+        >
+          {/* Using the exact same button style from the Home phone view */}
+          <button slot="ar-button" className="btn btn-primary" style={{ display: isLoading ? 'none' : 'block' }}>
+            VIEW IN AR
+          </button>
+        </model-viewer>
       </div>
+
+      {isLoading && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', textAlign: 'center' }}>
+          <h2>Loading Experience...</h2>
+        </div>
+      )}
     </div>
   );
 };
@@ -182,9 +160,9 @@ const VRShowroom = () => {
   }, []);
 
   return (
-    <div style={{ color: 'white', textAlign: 'center', padding: '50px' }}>
-      <h2>Loading VR Showroom...</h2>
-      <Link to="/"><button className="btn btn-outline" style={{ marginTop: '20px' }}>Back Home</button></Link>
+    <div id="vr-container">
+        <p style={{color: 'white', padding: '20px'}}>VR Library Loading...</p>
+        <Link to="/"><button className="btn btn-outline">Back Home</button></Link>
     </div>
   );
 };
