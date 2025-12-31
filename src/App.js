@@ -72,7 +72,7 @@ const Home = () => {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Porsche 911 Turbo</h1>
+        <h1>Cargo Drone</h1>
       </header>
 
       <div className="content-wrapper">
