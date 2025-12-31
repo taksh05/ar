@@ -32,17 +32,20 @@ const Home = () => {
       <div style={{ marginTop: 12 }}>
         <p style={{ marginBottom: 6 }}>Quick open in AR (if tapping the AR button doesn't launch):</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a
-            rel="ar"
-            href={typeof window !== 'undefined' ? `${window.location.origin}/models/porsche.usdz` : '/models/porsche.usdz'}
-            className="btn btn-outline"
-          >
-            Open in Quick Look (iOS)
-          </a>
+            <a
+              rel="ar noopener noreferrer"
+              href={typeof window !== 'undefined' ? `${window.location.origin}/models/porsche.usdz` : '/models/porsche.usdz'}
+              className="btn btn-outline"
+              target="_blank"
+            >
+              Open in Quick Look (iOS)
+            </a>
 
           <a
-            href={typeof window !== 'undefined' ? `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + '/models/porsche.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;end` : '#'}
+            href={typeof window !== 'undefined' ? `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + '/models/porsche.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end` : '#'}
             className="btn btn-primary"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             Open in Scene Viewer (Android)
           </a>
@@ -90,7 +93,7 @@ const VRShowroom = () => {
 
     return () => {
       script.removeEventListener('load', onLoaded);
-      document.body.removeEventListener(script);
+      if (script && script.parentNode) document.body.removeChild(script);
       const scene = document.querySelector('a-scene');
       if (scene) scene.remove();
     };
