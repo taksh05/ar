@@ -4,7 +4,9 @@ import QRCode from 'react-qr-code';
 
 const PorscheViewer = () => {
   const [showQR, setShowQR] = useState(false);
-  const [qrValue, setQrValue] = useState(typeof window !== 'undefined' ? window.location.href : '');
+  // Default QR points to the hash-based AR route so scanning works on static hosts / tunnels
+  const defaultArQr = (typeof window !== 'undefined' ? window.location.origin + '/#/ar' : '/#/ar');
+  const [qrValue, setQrValue] = useState(defaultArQr);
   const [detectStatus, setDetectStatus] = useState('');
 
   return (
@@ -52,7 +54,7 @@ const PorscheViewer = () => {
               style={{ width: 300, padding: 6 }}
             />
             <div style={{ marginTop: 6 }}>
-              <button onClick={() => setQrValue(window.location.href)} className="btn-secondary" style={{ marginRight: 8 }}>Use current page</button>
+              <button onClick={() => setQrValue(defaultArQr)} className="btn-secondary" style={{ marginRight: 8 }}>Use AR page</button>
               <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(qrValue); }} className="btn-primary" style={{ marginRight: 8 }}>Copy URL</button>
               <button onClick={async () => {
                 setDetectStatus('Detecting tunnel...');

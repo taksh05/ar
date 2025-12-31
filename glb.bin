@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Access-Control-Allow-Origin: *
+Age: 9
+Cache-Control: s-maxage=0
+Content-Disposition: inline; filename="index.html"
+Content-Length: 644
+Content-Type: text/html; charset=utf-8
+Date: Sat, 20 Dec 2025 04:09:57 GMT
+Etag: "b90eca3a29cd05062e3a85b15871b536"
+Last-Modified: Sat, 20 Dec 2025 04:09:47 GMT
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: HIT
+X-Vercel-Id: bom1::bxgnz-1766203797761-19f911320914
+
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.ico"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><meta name="description" content="Web site created using create-react-app"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><title>React App</title><script defer="defer" src="/static/js/main.3a4b9038.js"></script><link href="/static/css/main.f855e6bc.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import '@google/model-viewer';
 import QRCode from 'react-qr-code';
+import ProductGrid from './components/ProductGrid';
+import ProductDetail from './components/ProductDetail';
 
 // --- MAIN 360 & AR COMPONENT ---
 const Home = () => {
@@ -104,6 +106,9 @@ const Home = () => {
             <Link to="/vr">
               <button className="btn btn-primary">Launch VR</button>
             </Link>
+            <Link to="/products">
+              <button className="btn btn-outline">View Products</button>
+            </Link>
           </div>
         ) : (
           // Desktop: show QR button and VR link
@@ -114,14 +119,18 @@ const Home = () => {
             <Link to="/vr">
               <button className="btn btn-primary">Launch VR</button>
             </Link>
+            <Link to="/products">
+              <button className="btn btn-outline">Products</button>
+            </Link>
           </>
         )}
       </div>
 
-      {!isMobile && showQR && (
+        {!isMobile && showQR && (
         <div className="qr-container">
           <p style={{ marginBottom: '10px' }}>Scan to view in your room</p>
-          <QRCode value={(typeof window !== 'undefined' ? window.location.origin : '') + '/ar'} size={150} />
+          {/* Use a hash route so direct navigation from a QR works on static hosts without server-side rewrites */}
+          <QRCode value={(typeof window !== 'undefined' ? window.location.origin : '') + '/#/ar'} size={150} />
         </div>
       )}
     </div>
@@ -130,6 +139,86 @@ const Home = () => {
 
 // --- AR shortcut page (direct entry for mobiles via QR)
 const ArView = () => {
+  // Debug overlay state and helpers
+  const [diagLines, setDiagLines] = React.useState([]);
+  const pushDiag = (msg) => setDiagLines(d => [...d, `${new Date().toISOString()} - ${msg}`]);
+
+  React.useEffect(() => {
+    // global error capture
+    const onError = (event) => {
+      pushDiag(`window.onerror: ${event.message || event}`);
+    };
+    const onRejection = (ev) => {
+      pushDiag(`unhandledrejection: ${ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason)}`);
+    };
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+
+    // basic runtime checks
+    pushDiag(`userAgent: ${navigator.userAgent}`);
+    const mv = document.querySelector('#ar-model');
+    pushDiag(`model-viewer element present: ${!!mv}`);
+
+    // Check for model-viewer custom element
+    try {
+      const hasCustom = !!window.customElements && !!window.customElements.get && !!window.customElements.get('model-viewer');
+      pushDiag(`model-viewer custom element registered: ${hasCustom}`);
+    } catch (e) {
+      pushDiag(`customElements check failed: ${e && e.message ? e.message : e}`);
+    }
+
+    // WebXR support check (best-effort)
+    if (navigator.xr && navigator.xr.isSessionSupported) {
+      navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+        pushDiag(`WebXR immersive-ar supported: ${supported}`);
+      }).catch(err => pushDiag(`WebXR check error: ${err && err.message ? err.message : err}`));
+    } else {
+      pushDiag('WebXR not available on this browser');
+    }
+
+    // HEAD check for assets (some older browsers/tunnels might block HEAD; we try and fallback)
+    const origin = window.location.origin;
+    const urls = [`${origin}/models/porsche.glb`, `${origin}/models/porsche.usdz`];
+    urls.forEach(async (u) => {
+      try {
+        const res = await fetch(u, { method: 'HEAD' });
+        pushDiag(`${u} -> ${res.status} ${res.statusText}; content-type=${res.headers.get('content-type')}`);
+      } catch (err) {
+        // fallback try GET but don't download body fully; just attempt and abort quickly
+        try {
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 1500);
+          const res2 = await fetch(u, { method: 'GET', signal: controller.signal });
+          clearTimeout(id);
+          pushDiag(`${u} -> ${res2.status} ${res2.statusText}; content-type=${res2.headers.get('content-type')}`);
+        } catch (err2) {
+          pushDiag(`${u} -> fetch error: ${err2 && err2.message ? err2.message : err2}`);
+        }
+      }
+    });
+
+    // attach events to model-viewer if present
+    if (mv) {
+      const onLoad = () => pushDiag('model-viewer: load event fired');
+      const onErrorEvent = (e) => pushDiag(`model-viewer error event: ${e && e.detail ? JSON.stringify(e.detail) : String(e)}`);
+      mv.addEventListener('load', onLoad);
+      mv.addEventListener('error', onErrorEvent);
+      // progress may help on slow devices
+      mv.addEventListener('progress', (p) => pushDiag(`model-viewer progress: ${p && p.detail ? JSON.stringify(p.detail) : String(p)}`));
+
+      return () => {
+        window.removeEventListener('error', onError);
+        window.removeEventListener('unhandledrejection', onRejection);
+        mv.removeEventListener('load', onLoad);
+        mv.removeEventListener('error', onErrorEvent);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection);
+    };
+  }, []);
   // Do NOT auto-redirect on page load; instead present a clear tappable AR button.
   // Automatic redirects can cause the browser to show an app-open prompt unexpectedly.
 
@@ -150,10 +239,16 @@ const ArView = () => {
           arBtn.click();
           return;
         }
-        // As a last resort, navigate to USDZ on iOS or intent on Android when user taps
+        // As a last resort, use a rel="ar" anchor for iOS Quick Look, or intent on Android
         const ua = navigator.userAgent || '';
         const origin = window.location.origin;
         if (/iPhone|iPad|iPod/i.test(ua)) {
+          // try clicking a rel="ar" link if present (preferred for Quick Look)
+          const arLink = document.getElementById('ar-link');
+          if (arLink) {
+            arLink.click();
+            return;
+          }
           window.location.href = `${origin}/models/porsche.usdz`;
           return;
         }
@@ -167,6 +262,8 @@ const ArView = () => {
 
   return (
     <div className="ar-viewer-container">
+      {/* Hidden rel=ar anchor for iOS Quick Look fallback */}
+      <a id="ar-link" rel="ar" href="/models/porsche.usdz" style={{ display: 'none' }}>Open in AR</a>
       <model-viewer
         id="ar-model"
         src="/models/porsche.glb"
@@ -177,12 +274,34 @@ const ArView = () => {
         auto-rotate
         style={{ width: '100%', height: '100vh' }}
       >
-        <button slot="ar-button" style={{ display: 'none' }}></button>
+        <button slot="ar-button" style={{ display: 'none' }} aria-hidden="true"></button>
       </model-viewer>
 
-      <div className="ar-launch-overlay">
-        <button className="ar-launch-button" onClick={openAR}>Open AR</button>
-        <div className="ar-hint">If AR doesn't open automatically, tap the button above. For best results open in Chrome (Android) or Safari (iOS).</div>
+  <div className="ar-launch-overlay">
+        <div className="ar-instructions">
+          <div className="ar-title">Place the car in your room</div>
+          <div className="ar-copy">Point your camera at a flat surface and tap "Place in room". Move slowly to help the device detect the floor.</div>
+        </div>
+
+        <div className="ar-buttons">
+          <button className="ar-launch-button" onClick={openAR}>Place in room (AR)</button>
+          <button className="btn btn-outline" onClick={() => window.location.href = '#/vr'}>Enter VR</button>
+          <button className="btn btn-secondary" onClick={() => window.location.href = '#/'}>360 View</button>
+        </div>
+
+        <div className="ar-hint">If AR doesn't open, try Safari (iOS) or Chrome (Android). Make sure the page URL is the one you scanned (contains <code>#/ar</code>).</div>
+      </div>
+      {/* Debug panel for older devices: visible on-screen to capture errors and network checks */}
+      <div className="debug-panel" aria-live="polite">
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>Diagnostics</div>
+        <div className="debug-rows">
+          {diagLines.length === 0 ? <div className="debug-row">No diagnostics yet</div> : diagLines.slice().reverse().map((l, i) => (
+            <div key={i} className="debug-row">{l}</div>
+          ))}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <button className="btn btn-outline" onClick={() => { navigator.clipboard && navigator.clipboard.writeText(diagLines.join('\n')); }}>Copy diagnostics</button>
+        </div>
       </div>
     </div>
   );
@@ -191,62 +310,59 @@ const ArView = () => {
 // --- VR SHOWROOM COMPONENT ---
 const VRShowroom = () => {
   useEffect(() => {
+    // Create A-Frame script and build the scene only after it loads to avoid timing issues
+    if (document.querySelector('script[data-aframe-custom]')) return; // avoid double-loading
     const script = document.createElement('script');
-    script.src = "https://aframe.io/releases/1.4.0/aframe.min.js";
+    script.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
+    script.setAttribute('data-aframe-custom', 'true');
     document.body.appendChild(script);
-    // add listener when A-Frame has loaded to debug model loading
-    const onLoaded = () => {
-      // Wait for a-scene to be parsed, then attach model-loaded handler
-      const scene = document.querySelector('a-scene');
-      if (scene) {
-        const onSceneLoaded = () => {
-          const carEl = document.querySelector('#carEntity');
-          if (carEl) {
-            carEl.addEventListener('model-loaded', () => {
-              console.log('GLB model loaded');
-              carEl.setAttribute('visible', 'true');
-            });
-            // If the model is already cached/loaded, ensure visibility
-            setTimeout(() => {
-              const isLoaded = carEl.getAttribute('gltf-model');
-              carEl.setAttribute('visible', 'true');
-            }, 500);
-          } else {
-            // try again shortly
-            setTimeout(() => {
-              const retry = document.querySelector('#carEntity');
-              if (retry) retry.setAttribute('visible', 'true');
-            }, 800);
-          }
-        };
 
-        if (scene.hasLoaded) onSceneLoaded(); else scene.addEventListener('loaded', onSceneLoaded, { once: true });
+    const container = document.createElement('div');
+    container.id = 'aframe-container';
+    container.style.width = '100vw';
+    container.style.height = '100vh';
+    document.body.appendChild(container);
+
+    const buildScene = () => {
+      // Populate container with scene markup
+      container.innerHTML = `
+        <a-scene>
+          <a-sky color="#050505"></a-sky>
+          <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#111"></a-plane>
+          <a-entity id="carEntity" gltf-model="/models/porsche.glb" position="0 0 -3" scale="1.6 1.6 1.6" visible="false" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
+          <a-light type="ambient" intensity="0.3"></a-light>
+          <a-light type="point" position="2 4 -3" intensity="1"></a-light>
+          <a-camera position="0 1.6 0"></a-camera>
+        </a-scene>
+      `;
+
+      // Attach model-loaded listener
+      const carEl = container.querySelector('#carEntity');
+      if (carEl) {
+        carEl.addEventListener('model-loaded', () => {
+          carEl.setAttribute('visible', 'true');
+        });
+        // in case already resolved, set visible
+        setTimeout(() => carEl.setAttribute('visible', 'true'), 600);
       }
     };
 
-    script.addEventListener('load', onLoaded);
+    const onScriptLoad = () => {
+      // small delay to allow A-Frame to initialize
+      setTimeout(buildScene, 120);
+    };
+
+    script.addEventListener('load', onScriptLoad);
 
     return () => {
-      script.removeEventListener('load', onLoaded);
+      script.removeEventListener('load', onScriptLoad);
       if (script && script.parentNode) document.body.removeChild(script);
-      const scene = document.querySelector('a-scene');
-      if (scene) scene.remove();
+      const cont = document.getElementById('aframe-container');
+      if (cont && cont.parentNode) cont.parentNode.removeChild(cont);
     };
   }, []);
 
-  return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <a-scene>
-        <a-sky color="#050505"></a-sky>
-        <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#111"></a-plane>
-        {/* Load glb directly on the entity to simplify loading and avoid asset-item issues */}
-        <a-entity id="carEntity" gltf-model="/models/porsche.glb" position="0 0 -3" scale="1.6 1.6 1.6" visible="false" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
-        <a-light type="ambient" intensity="0.3"></a-light>
-        <a-light type="point" position="2 4 -3" intensity="1"></a-light>
-        <a-camera position="0 1.6 0"></a-camera>
-      </a-scene>
-    </div>
-  );
+  return <div />;
 };
 
 // --- ROUTING WRAPPER ---
@@ -255,6 +371,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/products" element={<ProductGrid />} />
+        <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/ar" element={<ArView />} />
         <Route path="/vr" element={<VRShowroom />} />
       </Routes>
