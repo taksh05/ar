@@ -130,28 +130,45 @@ const Home = () => {
 
 // --- AR shortcut page (direct entry for mobiles via QR)
 const ArView = () => {
-  useEffect(() => {
-    // try to auto-launch AR when this page is opened on mobile
-    const t = setTimeout(() => {
-      try {
-        const mv = document.querySelector('model-viewer');
-        if (mv) {
-          // try to click internal ar button
-          let arBtn = mv.querySelector('[slot="ar-button"]') || mv.querySelector('button[slot="ar-button"]');
-          try { if (!arBtn && mv.shadowRoot) arBtn = mv.shadowRoot.querySelector('button[slot="ar-button"]'); } catch (e) {}
-          if (arBtn) arBtn.click();
-        }
-      } catch (err) {
-        console.warn('AR page auto-launch failed', err);
-      }
-    }, 800);
+  // Do NOT auto-redirect on page load; instead present a clear tappable AR button.
+  // Automatic redirects can cause the browser to show an app-open prompt unexpectedly.
 
-    return () => clearTimeout(t);
-  }, []);
+  const openAR = () => {
+    try {
+      const mv = document.querySelector('model-viewer');
+      if (mv) {
+        // Find slotted ar-button or a button in shadowRoot and click it (user-initiated)
+        let arBtn = mv.querySelector('[slot="ar-button"]') || mv.querySelector('button[slot="ar-button"]');
+        try {
+          if (!arBtn && mv.shadowRoot) {
+            arBtn = mv.shadowRoot.querySelector('button[slot="ar-button"]');
+          }
+        } catch (e) {
+          // ignore shadow access errors
+        }
+        if (arBtn) {
+          arBtn.click();
+          return;
+        }
+        // As a last resort, navigate to USDZ on iOS or intent on Android when user taps
+        const ua = navigator.userAgent || '';
+        const origin = window.location.origin;
+        if (/iPhone|iPad|iPod/i.test(ua)) {
+          window.location.href = `${origin}/models/porsche.usdz`;
+          return;
+        }
+        const sceneIntent = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(origin + '/models/porsche.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end`;
+        window.location.href = sceneIntent;
+      }
+    } catch (err) {
+      console.warn('Open AR failed', err);
+    }
+  };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="ar-viewer-container">
       <model-viewer
+        id="ar-model"
         src="/models/porsche.glb"
         ios-src="/models/porsche.usdz"
         ar
@@ -159,7 +176,14 @@ const ArView = () => {
         camera-controls
         auto-rotate
         style={{ width: '100%', height: '100vh' }}
-      />
+      >
+        <button slot="ar-button" style={{ display: 'none' }}></button>
+      </model-viewer>
+
+      <div className="ar-launch-overlay">
+        <button className="ar-launch-button" onClick={openAR}>Open AR</button>
+        <div className="ar-hint">If AR doesn't open automatically, tap the button above. For best results open in Chrome (Android) or Safari (iOS).</div>
+      </div>
     </div>
   );
 };
