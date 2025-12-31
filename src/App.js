@@ -121,9 +121,45 @@ const Home = () => {
       {!isMobile && showQR && (
         <div className="qr-container">
           <p style={{ marginBottom: '10px' }}>Scan to view in your room</p>
-          <QRCode value={window.location.href} size={150} />
+          <QRCode value={(typeof window !== 'undefined' ? window.location.origin : '') + '/ar'} size={150} />
         </div>
       )}
+    </div>
+  );
+};
+
+// --- AR shortcut page (direct entry for mobiles via QR)
+const ArView = () => {
+  useEffect(() => {
+    // try to auto-launch AR when this page is opened on mobile
+    const t = setTimeout(() => {
+      try {
+        const mv = document.querySelector('model-viewer');
+        if (mv) {
+          // try to click internal ar button
+          let arBtn = mv.querySelector('[slot="ar-button"]') || mv.querySelector('button[slot="ar-button"]');
+          try { if (!arBtn && mv.shadowRoot) arBtn = mv.shadowRoot.querySelector('button[slot="ar-button"]'); } catch (e) {}
+          if (arBtn) arBtn.click();
+        }
+      } catch (err) {
+        console.warn('AR page auto-launch failed', err);
+      }
+    }, 800);
+
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <model-viewer
+        src="/models/porsche.glb"
+        ios-src="/models/porsche.usdz"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        camera-controls
+        auto-rotate
+        style={{ width: '100%', height: '100vh' }}
+      />
     </div>
   );
 };
@@ -179,6 +215,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/ar" element={<ArView />} />
         <Route path="/vr" element={<VRShowroom />} />
       </Routes>
     </Router>
