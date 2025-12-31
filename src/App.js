@@ -299,12 +299,12 @@ const ArView = () => {
               <div className="loading-bar" style={{ width: `${loadProgress}%` }}></div>
             </div>
             <div className="loading-text">Downloading 3D model... {loadProgress}%</div>
-            <div className="loading-hint">Large file (74 MB) — may take 30-60s on mobile data</div>
+            <div className="loading-hint">Large file () — may take 30-60s on mobile data</div>
           </div>
         )}
         
         <div className="ar-instructions">
-          <div className="ar-title">Place the car in your room</div>
+          <div className="ar-title">Place the model in your room</div>
           <div className="ar-copy">Point your camera at a flat surface and tap "Place in room". Move slowly to help the device detect the floor.</div>
         </div>
 

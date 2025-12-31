@@ -77,7 +77,7 @@ const PorscheViewer = () => {
 
   return (
     <div className="main-container">
-      <nav className="navbar">911 TURBO EXPERIENCE</nav>
+      <nav className="navbar">3D EXPERIENCE</nav>
       
       <div className="content-wrapper">
         <div ref={modelRef} className="model-section">
