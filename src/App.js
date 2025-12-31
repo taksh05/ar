@@ -28,6 +28,27 @@ const Home = () => {
         <button slot="ar-button" style={{display: 'none'}}></button>
       </model-viewer>
 
+      {/* Fallback / direct AR links for single-tap testing */}
+      <div style={{ marginTop: 12 }}>
+        <p style={{ marginBottom: 6 }}>Quick open in AR (if tapping the AR button doesn't launch):</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a
+            rel="ar"
+            href={typeof window !== 'undefined' ? `${window.location.origin}/models/porsche.usdz` : '/models/porsche.usdz'}
+            className="btn btn-outline"
+          >
+            Open in Quick Look (iOS)
+          </a>
+
+          <a
+            href={typeof window !== 'undefined' ? `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + '/models/porsche.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;end` : '#'}
+            className="btn btn-primary"
+          >
+            Open in Scene Viewer (Android)
+          </a>
+        </div>
+      </div>
+
       <div className="controls-row">
         <button className="btn btn-outline" onClick={() => setShowQR(!showQR)}>
           {showQR ? "Close QR" : "Scan for AR"}
@@ -53,8 +74,23 @@ const VRShowroom = () => {
     const script = document.createElement('script');
     script.src = "https://aframe.io/releases/1.4.0/aframe.min.js";
     document.body.appendChild(script);
+    // add listener when A-Frame has loaded to debug model loading
+    const onLoaded = () => {
+      const carEl = document.querySelector('#carEntity');
+      if (carEl) {
+        carEl.addEventListener('model-loaded', () => {
+          console.log('GLB model loaded');
+          // make sure it's visible
+          carEl.setAttribute('visible', 'true');
+        });
+      }
+    };
+
+    script.addEventListener('load', onLoaded);
+
     return () => {
-      document.body.removeChild(script);
+      script.removeEventListener('load', onLoaded);
+      document.body.removeEventListener(script);
       const scene = document.querySelector('a-scene');
       if (scene) scene.remove();
     };
@@ -68,7 +104,7 @@ const VRShowroom = () => {
         </a-assets>
         <a-sky color="#050505"></a-sky>
         <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#111"></a-plane>
-        <a-entity gltf-model="#car" position="0 0 -5" scale="2 2 2" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
+  <a-entity id="carEntity" gltf-model="#car" position="0 0 -4" scale="2 2 2" visible="false" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"></a-entity>
         <a-light type="ambient" intensity="0.3"></a-light>
         <a-light type="point" position="2 4 -3" intensity="1"></a-light>
         <a-camera position="0 1.6 0"></a-camera>
