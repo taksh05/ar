@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import '@google/model-viewer';
 import QRCode from 'react-qr-code';
-import ProductGrid from './components/ProductGrid';
-import ProductDetail from './components/ProductDetail';
 
 /* ---------------- HOME (360 + QR + PHONE AR BUTTON) ---------------- */
 
@@ -15,7 +13,6 @@ const Home = () => {
     const ua = navigator.userAgent || '';
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua));
   }, []);
-  
 
   const arUrl =
     typeof window !== 'undefined'
@@ -23,9 +20,9 @@ const Home = () => {
       : '/#/ar';
 
   return (
-    <div className="app-container">
-      <header className="header">
-        <h1>Cargo Drone</h1>
+    <div className="app-container" style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <header className="header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <h1>Cargo Drone / Porsche View</h1>
       </header>
 
       <div className="content-wrapper">
@@ -33,43 +30,57 @@ const Home = () => {
           <model-viewer
             src="/models/porsche.glb"
             ios-src="/models/porsche.usdz"
-            alt="droen model"
+            alt="drone model"
             ar
             ar-modes="webxr scene-viewer quick-look"
+            ar-placement="floor"
+            ar-scale="auto"
             camera-controls
             auto-rotate
             shadow-intensity="2"
             environment-image="neutral"
             exposure="1"
-            style={{ width: '100%', height: '500px' }}
+            style={{ width: '100%', height: '500px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}
           >
             {isMobile && (
               <Link
                 to="/ar"
                 slot="ar-button"
                 className="btn btn-primary"
-                style={{ textDecoration: 'none' }}
+                style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  padding: '12px 24px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  textDecoration: 'none',
+                  fontWeight: 'bold'
+                }}
               >
-                VIEW IN AR
+                VIEW IN REAL SIZE AR
               </Link>
             )}
           </model-viewer>
         </div>
 
-        <div className="controls-section">
+        <div className="controls-section" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {!isMobile && (
             <>
               <button
                 className="btn btn-outline"
                 onClick={() => setShowQR(!showQR)}
-                style={{ width: '100%' }}
+                style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
               >
                 {showQR ? 'Close QR' : 'Scan for AR'}
               </button>
 
               {showQR && (
-                <div className="qr-container" style={{ marginTop: 20, textAlign: 'center' }}>
-                  <p>Scan to view in your space</p>
+                <div className="qr-container" style={{ marginTop: 20, textAlign: 'center', padding: '10px', border: '1px solid #ddd' }}>
+                  <p>Scan with your phone to view in your space</p>
                   <QRCode value={arUrl} size={160} />
                 </div>
               )}
@@ -77,14 +88,8 @@ const Home = () => {
           )}
 
           <Link to="/vr" style={{ width: '100%' }}>
-            <button className="btn btn-primary" style={{ width: '100%' }}>
-              Launch VR
-            </button>
-          </Link>
-
-          <Link to="/products" style={{ width: '100%' }}>
-            <button className="btn btn-outline" style={{ width: '100%' }}>
-              View Products
+            <button className="btn btn-primary" style={{ width: '100%', padding: '10px', cursor: 'pointer' }}>
+              Launch VR Showroom
             </button>
           </Link>
         </div>
@@ -93,68 +98,87 @@ const Home = () => {
   );
 };
 
-/* ---------------- AR VIEW (SAME FOR PHONE + QR) ---------------- */
+/* ---------------- AR VIEW (FULLSCREEN FOR MOBILE) ---------------- */
 
 const ArView = () => {
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#000', position: 'relative' }}>
+      <Link 
+        to="/" 
+        style={{ 
+          position: 'absolute', 
+          top: '20px', 
+          left: '20px', 
+          zIndex: 10, 
+          color: 'white', 
+          textDecoration: 'none',
+          background: 'rgba(0,0,0,0.5)',
+          padding: '8px 15px',
+          borderRadius: '20px'
+        }}
+      >
+        ✕ Back
+      </Link>
+      
       <model-viewer
         src="/models/porsche.glb"
         ios-src="/models/porsche.usdz"
         alt="drone model"
         ar
+        ar-placement="floor" /* Forces ground tracking */
+        ar-scale="auto"      /* Starts at 1:1, but allows zoom */
         ar-modes="webxr scene-viewer quick-look"
         camera-controls
-        environment-image=""
+        environment-image="neutral"
         shadow-intensity="2"
         shadow-softness="0.5"
-        exposure="0.05"
+        exposure="1"
         style={{ width: '100%', height: '100%' }}
       >
-        {/* SAME AR BUTTON FOR QR + PHONE */}
-        <button slot="ar-button" className="btn btn-primary">
-          VIEW IN AR
+        <button 
+          slot="ar-button" 
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '15px 30px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '30px',
+            fontSize: '18px',
+            fontWeight: 'bold'
+          }}
+        >
+          START AR EXPERIENCE
         </button>
       </model-viewer>
     </div>
   );
 };
 
-/* ---------------- VR SHOWROOM ---------------- */
+/* ---------------- VR SHOWROOM (STUB) ---------------- */
 
 const VRShowroom = () => {
-  useEffect(() => {
-    if (document.querySelector('script[data-aframe]')) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
-    script.setAttribute('data-aframe', 'true');
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   return (
-    <div style={{ padding: 20 }}>
-      <p style={{ color: '#fff' }}>VR Loading...</p>
+    <div style={{ padding: 40, textAlign: 'center', background: '#222', height: '100vh', color: 'white' }}>
+      <h2>VR Mode</h2>
+      <p>A-Frame / WebXR Content would load here.</p>
       <Link to="/">
-        <button className="btn btn-outline">Back Home</button>
+        <button style={{ padding: '10px 20px', cursor: 'pointer' }}>Back Home</button>
       </Link>
     </div>
   );
 };
 
-/* ---------------- ROUTER ---------------- */
+/* ---------------- MAIN APP ROUTER ---------------- */
 
 export default function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/products" element={<ProductGrid />} />
-        <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/ar" element={<ArView />} />
         <Route path="/vr" element={<VRShowroom />} />
       </Routes>
