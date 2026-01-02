@@ -34,10 +34,11 @@ const Home = () => {
             ios-src="/models/porsche.usdz"
             alt="drone model"
             ar
-            ar-modes="webxr scene-viewer quick-look"
-            ar-placement="floor" // Fixes the model to the ground
-            ar-scale="auto"      // Keeps real-world size
-            camera-controls      // Allows 360 rotation & zoom
+            /* scene-viewer first for best Android floor-locking */
+            ar-modes="scene-viewer webxr quick-look"
+            ar-placement="floor"
+            ar-scale="auto"
+            camera-controls
             auto-rotate
             shadow-intensity="2"
             environment-image="neutral"
@@ -94,7 +95,7 @@ const Home = () => {
   );
 };
 
-/* ---------------- AR VIEW (SAME FOR PHONE + QR) ---------------- */
+/* ---------------- AR VIEW (FIXED FOR ANDROID STATIC PLACEMENT) ---------------- */
 
 const ArView = () => {
   return (
@@ -104,10 +105,14 @@ const ArView = () => {
         ios-src="/models/porsche.usdz"
         alt="drone model"
         ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor" // Keeps model static on the floor
-        ar-scale="auto"      // Real size starting point
-        camera-controls      // Enables finger rotation (360) and zoom
+        /* Order changed: scene-viewer is more stable for world-locking */
+        ar-modes="scene-viewer webxr quick-look"
+        /* Forces the model to stay on the floor/surface */
+        ar-placement="floor"
+        /* Allows user to zoom in/out */
+        ar-scale="auto"
+        /* Allows user to rotate 360 with one finger */
+        camera-controls
         environment-image="neutral"
         shadow-intensity="2"
         shadow-softness="0.5"
