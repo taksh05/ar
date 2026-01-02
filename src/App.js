@@ -32,12 +32,12 @@ const Home = () => {
           <model-viewer
             src="/models/porsche.glb"
             ios-src="/models/porsche.usdz"
-            alt="droen model"
+            alt="drone model"
             ar
             ar-modes="webxr scene-viewer quick-look"
-            ar-placement="floor"
-            ar-scale="auto"
-            camera-controls
+            ar-placement="floor" // Fixes the model to the ground
+            ar-scale="auto"      // Keeps real-world size
+            camera-controls      // Allows 360 rotation & zoom
             auto-rotate
             shadow-intensity="2"
             environment-image="neutral"
@@ -104,11 +104,11 @@ const ArView = () => {
         ios-src="/models/porsche.usdz"
         alt="drone model"
         ar
-        ar-placement="floor"
-        ar-scale="auto"
         ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        environment-image=""
+        ar-placement="floor" // Keeps model static on the floor
+        ar-scale="auto"      // Real size starting point
+        camera-controls      // Enables finger rotation (360) and zoom
+        environment-image="neutral"
         shadow-intensity="2"
         shadow-softness="0.5"
         exposure="1"
@@ -134,7 +134,8 @@ const VRShowroom = () => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      const el = document.querySelector('script[data-aframe]');
+      if (el) document.body.removeChild(el);
     };
   }, []);
 
