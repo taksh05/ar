@@ -14,8 +14,8 @@ const urlsToCache = [
 
 // Large model files - cache permanently
 const modelFiles = [
-  '/models/porsche.glb',
-  '/models/porsche.usdz'
+  '/models/drone_final_v1.glb',
+  '/models/drone_final_v1.usdz'
 ];
 
 self.addEventListener('install', (event) => {

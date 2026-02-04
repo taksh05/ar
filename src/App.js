@@ -30,8 +30,8 @@ const Home = () => {
       <div className="content-wrapper">
         <div className="model-section">
           <model-viewer
-            src="/models/porsche.glb"
-            ios-src="/models/porsche.usdz"
+            src="/models/drone_final_v1.glb"
+            ios-src="/models/drone_final_v1.usdz"
             alt="drone model"
             ar
             ar-modes="webxr scene-viewer quick-look"
