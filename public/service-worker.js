@@ -1,103 +1,61 @@
-// Service Worker for aggressive 3D model caching
-// Models are cached permanently after first download
+// Safe Service Worker (AR friendly)
 
-const CACHE_NAME = 'porsche-models-v1';
-const MODEL_CACHE = 'porsche-models-permanent';
+const CACHE_NAME = 'app-cache-v2';
 
-// Files to cache immediately
+// Files to cache (ONLY normal assets, NOT models)
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/css/main.c88314b8.css',
-  '/static/js/main.076c50e1.js'
 ];
 
-// Large model files - cache permanently
-const modelFiles = [
-  '/models/drone_final_v1.glb',
-  '/models/drone_final_v1.usdz'
-];
-
+// Install
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
-  // Skip waiting to activate immediately
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
+  );
 });
 
+// Activate
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== MODEL_CACHE) {
-            return caches.delete(cacheName);
+    caches.keys().then((names) =>
+      Promise.all(
+        names.map((name) => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
           }
         })
-      );
-    })
+      )
+    )
   );
   self.clients.claim();
 });
 
+// Fetch
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  
-  // Special handling for 3D models - cache first, network fallback
-  if (modelFiles.some(model => url.pathname.endsWith(model.split('/').pop()))) {
-    event.respondWith(
-      caches.open(MODEL_CACHE).then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            console.log('Serving model from cache:', url.pathname);
-            return cachedResponse;
-          }
-          
-          // Not in cache, fetch and store permanently
-          console.log('Downloading and caching model:', url.pathname);
-          return fetch(event.request).then((networkResponse) => {
-            // Clone the response before caching
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
-        });
-      })
-    );
-    return;
+
+  // ❌ NEVER intercept model files (IMPORTANT FOR AR)
+  if (
+    url.pathname.endsWith('.glb') ||
+    url.pathname.endsWith('.usdz')
+  ) {
+    return; // Let browser fetch directly
   }
-  
-  // For other requests, network first, cache fallback
+
+  // Cache other requests
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, clone);
+        });
         return response;
       })
-      .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
-});
-
-// Listen for messages from the main thread
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  // Clear model cache if requested
-  if (event.data && event.data.type === 'CLEAR_MODEL_CACHE') {
-    caches.delete(MODEL_CACHE).then(() => {
-      event.ports[0].postMessage({ cleared: true });
-    });
-  }
 });
