@@ -5,7 +5,12 @@ import QRCode from 'react-qr-code';
 import ProductGrid from './components/ProductGrid';
 import ProductDetail from './components/ProductDetail';
 
-/* ---------------- HOME (360 + QR + PHONE AR BUTTON) ---------------- */
+/* ---------------- COMMON MODEL PATH ---------------- */
+
+const modelSrc = process.env.PUBLIC_URL + '/models/drone_final_v1.glb';
+const iosSrc   = process.env.PUBLIC_URL + '/models/drone_final_v1.usdz';
+
+/* ---------------- HOME ---------------- */
 
 const Home = () => {
   const [showQR, setShowQR] = useState(false);
@@ -30,27 +35,19 @@ const Home = () => {
       <div className="content-wrapper">
         <div className="model-section">
           <model-viewer
-            src="/models/drone_final_v1.glb"
-            ios-src="/models/drone_final_v1.usdz"
+            src={modelSrc}
+            ios-src={iosSrc}
             alt="drone model"
             ar
             ar-modes="webxr scene-viewer quick-look"
-            ar-placement="floor" // Fixes the model to the ground
-            ar-scale="auto"      // Keeps real-world size
-            camera-controls      // Allows 360 rotation & zoom
+            ar-placement="floor"
+            ar-scale="auto"
+            camera-controls
             auto-rotate
-            shadow-intensity="2"
-            environment-image="neutral"
-            exposure="1"
             style={{ width: '100%', height: '500px' }}
           >
             {isMobile && (
-              <Link
-                to="/ar"
-                slot="ar-button"
-                className="btn btn-primary"
-                style={{ textDecoration: 'none' }}
-              >
+              <Link to="/ar" slot="ar-button" className="btn btn-primary">
                 VIEW IN AR
               </Link>
             )}
@@ -69,8 +66,7 @@ const Home = () => {
               </button>
 
               {showQR && (
-                <div className="qr-container" style={{ marginTop: 20, textAlign: 'center' }}>
-                  <p>Scan to view in your space</p>
+                <div style={{ marginTop: 20, textAlign: 'center' }}>
                   <QRCode value={arUrl} size={160} />
                 </div>
               )}
@@ -94,57 +90,26 @@ const Home = () => {
   );
 };
 
-/* ---------------- AR VIEW (SAME FOR PHONE + QR) ---------------- */
+/* ---------------- AR VIEW ---------------- */
 
 const ArView = () => {
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
       <model-viewer
-        src="/models/porsche.glb"
-        ios-src="/models/porsche.usdz"
+        src={modelSrc}
+        ios-src={iosSrc}
         alt="drone model"
         ar
         ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor" // Keeps model static on the floor
-        ar-scale="auto"      // Real size starting point
-        camera-controls      // Enables finger rotation (360) and zoom
-        environment-image="neutral"
-        shadow-intensity="2"
-        shadow-softness="0.5"
-        exposure="1"
+        ar-placement="floor"
+        ar-scale="auto"
+        camera-controls
         style={{ width: '100%', height: '100%' }}
       >
         <button slot="ar-button" className="btn btn-primary">
           VIEW IN AR
         </button>
       </model-viewer>
-    </div>
-  );
-};
-
-/* ---------------- VR SHOWROOM ---------------- */
-
-const VRShowroom = () => {
-  useEffect(() => {
-    if (document.querySelector('script[data-aframe]')) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
-    script.setAttribute('data-aframe', 'true');
-    document.body.appendChild(script);
-
-    return () => {
-      const el = document.querySelector('script[data-aframe]');
-      if (el) document.body.removeChild(el);
-    };
-  }, []);
-
-  return (
-    <div style={{ padding: 20 }}>
-      <p style={{ color: '#fff' }}>VR Loading...</p>
-      <Link to="/">
-        <button className="btn btn-outline">Back Home</button>
-      </Link>
     </div>
   );
 };
@@ -159,7 +124,6 @@ export default function App() {
         <Route path="/products" element={<ProductGrid />} />
         <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/ar" element={<ArView />} />
-        <Route path="/vr" element={<VRShowroom />} />
       </Routes>
     </Router>
   );
