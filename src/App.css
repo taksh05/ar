@@ -1,38 +1,142 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;600&display=swap');
+
+:root {
+  --bg-color: #0a0a0c;
+  --card-bg: rgba(23, 23, 26, 0.8);
+  --accent: #00f2ff; /* Cyan glow */
+  --secondary: #7000ff; /* Purple glow */
+  --text: #ffffff;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+.app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: 20px;
+  align-items: center;
+  background: radial-gradient(circle at top right, #1a1a2e, #0a0a0c);
+}
+
+/* Header Styling */
+.header h1 {
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: linear-gradient(to right, var(--accent), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+/* Content Layout */
+.content-wrapper {
+  width: 100%;
+  max-width: 500px; /* Mobile focused width */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Model Viewer Styling */
+.model-section {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+model-viewer {
+  background-color: transparent;
+  --poster-color: transparent;
+}
+
+/* Button Styling (Sexy & Tactile) */
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn {
+  border: none;
+  padding: 16px 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  text-decoration: none;
 }
 
-.App-link {
-  color: #61dafb;
+.btn-primary {
+  background: linear-gradient(45deg, var(--accent), #00a2ff);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 242, 255, 0.3);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+}
+
+/* QR Code Section */
+.qr-container {
+  background: white;
+  padding: 15px;
+  border-radius: 18px;
+  display: inline-block;
+  margin: 20px auto;
+  box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+}
+
+/* AR View Fullscreen */
+.ar-view-container {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .app-container {
+    padding: 15px;
+  }
+  
+  model-viewer {
+    height: 350px !important;
   }
 }

@@ -1,11 +1,20 @@
 [
   {
-    "slug": "porsche-911",
-    "title": "Porsche 911 Turbo (Sample)",
-    "price": "₹ 1,20,00,000",
-    "description": "Sample Porsche 911 model for demo. Replace with your real product description.",
-    "image": "https://via.placeholder.com/800x450?text=Porsche+911",
-    "glb": "/models/porsche.glb",
-    "usdz": "/models/porsche.usdz"
+    "slug": "cargo-drone-v1",
+    "title": "CARGO DRONE V1.0",
+    "price": "₹ 8,50,000",
+    "description": "Next-gen autonomous delivery system equipped with SAT-LINK connectivity and a high-torque propulsion system. Designed for rapid cargo transport in complex urban environments with zero-emission efficiency.",
+    "image": "https://images.unsplash.com/photo-1508614589041-895b83967e45?auto=format&fit=crop&q=80&w=800",
+    "glb": "/models/drone_final_v1.glb",
+    "usdz": "/models/drone_final_v1.usdz"
+  },
+  {
+    "slug": "stealth-courier-x",
+    "title": "STEALTH COURIER X",
+    "price": "₹ 12,20,000",
+    "description": "Advanced long-range courier drone featuring carbon-fiber reinforcement and silent-motor technology. Perfect for high-security medical and document transport across 40km ranges.",
+    "image": "https://images.unsplash.com/photo-1524143980106-ad0563629d45?auto=format&fit=crop&q=80&w=800",
+    "glb": "/models/drone_final_v1.glb",
+    "usdz": "/models/drone_final_v1.usdz"
   }
 ]

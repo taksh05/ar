@@ -6,166 +6,88 @@ const VRShowroom = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Suppress A-Frame warnings and errors in React
     const originalError = console.error;
     const originalWarn = console.warn;
     
     console.error = (...args) => {
-      // Filter out A-Frame React warnings
       if (args[0] && typeof args[0] === 'string' && 
-          (args[0].includes('Warning: Unknown event handler') || 
-           args[0].includes('THREE.') ||
-           args[0].includes('A-Frame'))) {
-        return;
-      }
+          (args[0].includes('Warning: Unknown event handler') || args[0].includes('THREE.') || args[0].includes('A-Frame'))) return;
       originalError.apply(console, args);
     };
-    
-    console.warn = (...args) => {
-      if (args[0] && typeof args[0] === 'string' && args[0].includes('THREE.')) {
-        return;
-      }
-      originalWarn.apply(console, args);
-    };
 
-    // Check if A-Frame is already loaded
     if (window.AFRAME) {
-      setLoadProgress(50);
       setIsLoading(false);
       setLoadProgress(100);
-      return () => {
-        console.error = originalError;
-        console.warn = originalWarn;
-      };
+      return;
     }
 
     const script = document.createElement('script');
     script.src = "https://aframe.io/releases/1.4.0/aframe.min.js";
     script.async = true;
-    
-    script.onerror = () => {
-      setError('Failed to load VR library. Please check your internet connection.');
-      setIsLoading(false);
-      console.error = originalError;
-      console.warn = originalWarn;
-    };
-    
     script.onload = () => {
       setLoadProgress(50);
-      // Wait for A-Frame to initialize
-      setTimeout(() => {
-        setIsLoading(false);
-        setLoadProgress(100);
-      }, 1000);
+      setTimeout(() => { setIsLoading(false); setLoadProgress(100); }, 1000);
     };
-    
-    try {
-      document.body.appendChild(script);
-    } catch (e) {
-      setError('Failed to initialize VR. ' + e.message);
-      setIsLoading(false);
+    script.onerror = () => setError('VR Systems Offline. Check Connection.');
+    document.body.appendChild(script);
+
+    return () => {
       console.error = originalError;
       console.warn = originalWarn;
-    }
-    
-    return () => { 
-      console.error = originalError;
-      console.warn = originalWarn;
-      
-      try {
-        if (script.parentNode) {
-          document.body.removeChild(script);
-        }
-      } catch (e) {
-        // Ignore cleanup errors
-      }
-      const scene = document.querySelector('a-scene');
-      if (scene && scene.parentNode) {
-        scene.parentNode.removeChild(scene);
-      }
     };
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {error && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: '#050505',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          flexDirection: 'column',
-          color: '#fff',
-          padding: '20px'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '20px', color: '#ff4444' }}>Error Loading VR</div>
-          <div style={{ fontSize: '16px', marginBottom: '30px', textAlign: 'center', maxWidth: '500px' }}>{error}</div>
-          <button 
-            onClick={() => window.location.href = '/'}
-            style={{
-              padding: '12px 28px',
-              background: '#d50000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              textTransform: 'uppercase'
-            }}
-          >
-            Back to Home
-          </button>
-        </div>
-      )}
-      {isLoading && !error && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: '#050505',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          flexDirection: 'column',
-          color: '#fff'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '20px' }}>Loading VR Showroom...</div>
-          <div style={{ width: '300px', height: '6px', background: '#333', borderRadius: '3px', overflow: 'hidden' }}>
-            <div style={{ width: `${loadProgress}%`, height: '100%', background: '#0af', transition: 'width 0.5s' }}></div>
+    <div className="vr-wrapper" style={{ width: '100vw', height: '100vh', background: '#000' }}>
+      {isLoading && (
+        <div className="loading-indicator" style={{ position: 'fixed', zIndex: 9999, background: '#000', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <h2 style={{ color: '#00f2ff', fontFamily: 'Orbitron' }}>INITIALIZING VR HANGAR</h2>
+          <div className="loading-bar-container" style={{ width: '300px' }}>
+            <div className="loading-bar" style={{ width: `${loadProgress}%` }}></div>
           </div>
-          <div style={{ fontSize: '16px', marginTop: '10px' }}>{loadProgress}%</div>
+          <p>{loadProgress}%</p>
         </div>
       )}
-      {!error && (
-        <a-scene shadow="type: pcfsoft" loading-screen="enabled: false" vr-mode-ui="enabled: true">
-        <a-assets>
-          <a-asset-item id="porsche-model" src="/models/porsche.glb"></a-asset-item>
-        </a-assets>
 
-        <a-sky color="#050505"></a-sky>
-        <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#111" shadow></a-plane>
+      {!error && !isLoading && (
+        <a-scene shadow="type: pcfsoft" embedded style={{ height: '100vh', width: '100vw' }}>
+          <a-assets>
+            {/* Drone model path from your app */}
+            <a-asset-item id="drone-model" src="/models/drone_final_v1.glb"></a-asset-item>
+          </a-assets>
 
-        <a-entity 
-          gltf-model="#porsche-model" 
-          position="0 0 -4" 
-          scale="2.5 2.5 2.5"
-          shadow="cast: true"
-        ></a-entity>
+          <a-sky color="#020205"></a-sky>
+          
+          {/* Futuristic Grid Floor */}
+          <a-grid static-body material="opacity: 0.2; color: #00f2ff"></a-grid>
+          <a-plane position="0 -0.1 0" rotation="-90 0 0" width="100" height="100" color="#050505"></a-plane>
 
-        <a-light type="ambient" intensity="0.4"></a-light>
-        <a-light type="spot" position="0 10 2" intensity="2" angle="40" penumbra="1" shadow></a-light>
-        <a-camera position="0 1.6 0"></a-camera>
-      </a-scene>
+          {/* The Drone */}
+          <a-entity 
+            gltf-model="#drone-model" 
+            position="0 1.5 -3" 
+            scale="1.5 1.5 1.5"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear"
+            shadow="cast: true"
+          ></a-entity>
+
+          {/* Cinematic Lights */}
+          <a-light type="ambient" intensity="0.3"></a-light>
+          <a-light type="point" position="2 4 -2" intensity="1.5" color="#00f2ff"></a-light>
+          <a-light type="point" position="-2 4 -2" intensity="1.5" color="#7000ff"></a-light>
+          
+          <a-camera position="0 1.6 0">
+             <a-cursor color="#00f2ff"></a-cursor>
+          </a-camera>
+        </a-scene>
       )}
+      
+      <button 
+        onClick={() => window.location.hash = '/'} 
+        className="btn btn-outline" 
+        style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 100, fontSize: '10px' }}>
+        EXIT VR
+      </button>
     </div>
   );
 };

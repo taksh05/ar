@@ -1,208 +1,112 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '@google/model-viewer';
 import QRCode from 'react-qr-code';
+import { Link } from 'react-router-dom';
 
-const PorscheViewer = () => {
+const CargoDroneViewer = () => {
   const [showQR, setShowQR] = useState(false);
-  // Default QR points to the hash-based AR route so scanning works on static hosts / tunnels
-  const defaultArQr = (typeof window !== 'undefined' ? window.location.origin + '/#/ar' : '/#/ar');
-  const [qrValue, setQrValue] = useState(defaultArQr);
-  const [detectStatus, setDetectStatus] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  
   const modelRef = useRef(null);
-  const observerRef = useRef(null);
+  
+  // Drone Paths from your App.js
+  const modelSrc = process.env.PUBLIC_URL + '/models/drone_final_v1.glb';
+  const iosSrc   = process.env.PUBLIC_URL + '/models/drone_final_v1.usdz';
+  const arUrl    = typeof window !== 'undefined' ? window.location.origin + '/#/ar' : '/#/ar';
 
-  // Prefetch models on page load (downloads in background)
   useEffect(() => {
-    // Start downloading models immediately in background
-    const prefetchModel = (url) => {
-      fetch(url, { mode: 'no-cors' }).catch(() => {});
-    };
-    
-    // Prefetch after a short delay to not block initial render
-    const timer = setTimeout(() => {
-      prefetchModel('/models/porsche.glb');
-      prefetchModel('/models/porsche.usdz');
-    }, 500);
-
-    return () => clearTimeout(timer);
+    const ua = navigator.userAgent || '';
+    setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua));
   }, []);
 
-  // Lazy loading: only show model when it comes into viewport
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observerRef.current?.disconnect();
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (modelRef.current) {
-      observerRef.current.observe(modelRef.current);
-    }
-
-    return () => observerRef.current?.disconnect();
-  }, []);
-
-  // Track loading progress
+  // Loading Logic
   useEffect(() => {
     const modelViewer = modelRef.current;
     if (!modelViewer) return;
-
-    const handleProgress = (event) => {
-      const progress = event.detail.totalProgress * 100;
-      setLoadingProgress(Math.round(progress));
-    };
-
-    const handleLoad = () => {
-      setIsLoaded(true);
-      setLoadingProgress(100);
-    };
+    const handleProgress = (e) => setLoadingProgress(Math.round(e.detail.totalProgress * 100));
+    const handleLoad = () => setIsLoaded(true);
 
     modelViewer.addEventListener('progress', handleProgress);
     modelViewer.addEventListener('load', handleLoad);
-
     return () => {
       modelViewer.removeEventListener('progress', handleProgress);
       modelViewer.removeEventListener('load', handleLoad);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
-    <div className="main-container">
-      <nav className="navbar">3D EXPERIENCE</nav>
-      
+    <div className="app-container">
+      <header className="header">
+        <h1>CARGO DRONE <span style={{fontSize: '0.5rem', verticalAlign: 'middle', opacity: 0.6}}>V1.0</span></h1>
+      </header>
+
       <div className="content-wrapper">
-        <div ref={modelRef} className="model-section">
+        {/* 3D Model Section */}
+        <div className="model-section">
           {!isLoaded && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              color: '#fff',
-              zIndex: 10
-            }}>
-              <div style={{ fontSize: '18px', marginBottom: '10px' }}>Loading Model...</div>
-              <div style={{ width: '200px', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ width: `${loadingProgress}%`, height: '100%', background: '#0af', transition: 'width 0.3s' }}></div>
+            <div className="loading-indicator">
+              <div className="loading-text">INITIALIZING SYSTEMS...</div>
+              <div className="loading-bar-container">
+                <div className="loading-bar" style={{ width: `${loadingProgress}%` }}></div>
               </div>
-              <div style={{ fontSize: '14px', marginTop: '5px' }}>{loadingProgress}%</div>
+              <div className="loading-hint">{loadingProgress}%</div>
             </div>
           )}
+          
           <model-viewer
-            src={isVisible ? "/models/porsche.glb" : undefined}
-            ios-src={isVisible ? "/models/porsche.usdz" : undefined}
-            poster="https://via.placeholder.com/800x600/000000/FFFFFF/?text=Porsche+911"
+            ref={modelRef}
+            src={modelSrc}
+            ios-src={iosSrc}
+            alt="Cargo Drone 3D Model"
             ar
             ar-modes="webxr scene-viewer quick-look"
+            ar-placement="floor"
             camera-controls
             auto-rotate
-            auto-rotate-delay="1000"
-            rotation-per-second="30deg"
-            shadow-intensity="1"
+            shadow-intensity="1.5"
             environment-image="neutral"
             exposure="1"
-            loading="eager"
-            reveal="auto"
-            interaction-prompt="none"
-            style={{ width: '100%', height: '100%', background: '#000' }}
+            style={{ width: '100%', height: '100%' }}
           >
-            <button slot="ar-button" className="ar-button">VIEW IN AR</button>
+            {isMobile && (
+              <button slot="ar-button" className="btn btn-primary ar-launch-button" style={{position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)'}}>
+                VIEW IN YOUR SPACE
+              </button>
+            )}
           </model-viewer>
         </div>
 
+        {/* Info & Controls Section */}
         <div className="controls-section">
+          <div className="specs-grid">
+            <div className="spec-item"><span>Payload</span><strong>15 KG</strong></div>
+            <div className="spec-item"><span>Range</span><strong>40 KM</strong></div>
+            <div className="spec-item"><span>Max Speed</span><strong>85 KM/H</strong></div>
+            <div className="spec-item"><span>Battery</span><strong>45 MIN</strong></div>
+          </div>
+
           <div className="controls">
-            <button onClick={() => setShowQR(!showQR)} className="btn-secondary">
-              {showQR ? "Hide QR" : "Scan for AR"}
-            </button>
-            <button onClick={() => window.location.href='/vr'} className="btn-primary">
-              Enter VR Showroom
-            </button>
+            {!isMobile && (
+              <button className="btn btn-outline" onClick={() => setShowQR(!showQR)}>
+                {showQR ? 'HIDE AR SCANNER' : 'SCAN FOR AR'}
+              </button>
+            )}
+
+            {showQR && (
+              <div className="qr-container" style={{background: '#fff', padding: '15px', borderRadius: '15px', display: 'flex', justifyContent: 'center'}}>
+                <QRCode value={arUrl} size={150} />
+              </div>
+            )}
+
+            <Link to="/vr" className="btn btn-primary">LAUNCH VR INTERFACE</Link>
+            <Link to="/products" className="btn btn-outline">TECHNICAL SPECS</Link>
           </div>
         </div>
       </div>
-
-      {showQR && (
-        <div className="qr-modal">
-          <p>Scan with your phone camera</p>
-          <div style={{ marginBottom: 8 }}>
-            <label htmlFor="qr-input" style={{ display: 'block', marginBottom: 6 }}>QR target URL</label>
-            <input
-              id="qr-input"
-              type="text"
-              value={qrValue}
-              onChange={(e) => setQrValue(e.target.value)}
-              style={{ width: 300, padding: 6 }}
-            />
-            <div style={{ marginTop: 6 }}>
-              <button onClick={() => setQrValue(defaultArQr)} className="btn-secondary" style={{ marginRight: 8 }}>Use AR page</button>
-              <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(qrValue); }} className="btn-primary" style={{ marginRight: 8 }}>Copy URL</button>
-              <button onClick={async () => {
-                setDetectStatus('Detecting tunnel...');
-                // 1) If current URL already looks like a tunnel, use it
-                try {
-                  const href = window.location.href || '';
-                  if (/ngrok\.io|loca\.lt|trycloudflare|localtunnel\.me/i.test(href)) {
-                    setQrValue(href);
-                    setDetectStatus('Using current URL (appears to be a tunnel)');
-                    return;
-                  }
-
-                  // 2) Try ngrok local API (http://127.0.0.1:4040/api/tunnels)
-                  try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), 1500);
-                    const res = await fetch('http://127.0.0.1:4040/api/tunnels', { signal: controller.signal });
-                    clearTimeout(id);
-                    if (res.ok) {
-                      const data = await res.json();
-                      if (data && data.tunnels && data.tunnels.length) {
-                        const httpsTunnel = data.tunnels.find(t => t.public_url && t.public_url.startsWith('https')) || data.tunnels[0];
-                        if (httpsTunnel && httpsTunnel.public_url) {
-                          setQrValue(httpsTunnel.public_url);
-                          setDetectStatus('Found ngrok tunnel');
-                          return;
-                        }
-                      }
-                    }
-                  } catch (err) {
-                    // ignore, fall through to not-found
-                  }
-
-                  setDetectStatus('No tunnel detected (open ngrok or use localtunnel and paste URL)');
-                } catch (err) {
-                  setDetectStatus('Detection failed: ' + (err && err.message ? err.message : String(err)));
-                }
-              }} className="btn-tertiary">Detect tunnel</button>
-            </div>
-          </div>
-
-          {qrValue.includes('localhost') && (
-            <div style={{ color: '#ffcc00', marginBottom: 8 }}>
-              Note: QR points to a localhost address which phones cannot reach. Run the app via a tunnel (ngrok/localtunnel) or use your PC's LAN IP and paste that URL here.
-            </div>
-          )}
-          {detectStatus && (
-            <div style={{ color: '#9bd', marginBottom: 8 }}>{detectStatus}</div>
-          )}
-
-          <div className="qr-box">
-             <QRCode value={qrValue} size={150} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default PorscheViewer;
+export default CargoDroneViewer;

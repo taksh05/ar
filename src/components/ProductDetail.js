@@ -16,7 +16,6 @@ const ProductDetail = () => {
         if (!arBtn && mv.shadowRoot) arBtn = mv.shadowRoot.querySelector('button[slot="ar-button"]');
         if (arBtn) arBtn.click();
       } catch (e) {
-        // fallback
         const ua = navigator.userAgent || '';
         const origin = window.location.origin;
         if (/iPhone|iPad|iPod/i.test(ua)) window.location.href = `${origin}${product.usdz}`;
@@ -26,11 +25,16 @@ const ProductDetail = () => {
   };
 
   return (
-    <div style={{ padding: 24, color: '#fff' }}>
-      <Link to="#/" className="btn btn-outline">Back</Link>
-      <h2 style={{ marginTop: 12 }}>{product.title}</h2>
-      <div style={{ display: 'flex', gap: 24, marginTop: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 480px', minWidth: 320 }}>
+    <div className="app-container" style={{ padding: '20px' }}>
+      {/* Back Button with Icon style */}
+      <Link to="/" className="btn btn-outline" style={{ alignSelf: 'flex-start', marginBottom: '20px', padding: '10px 20px' }}>
+        ← BACK TO FLEET
+      </Link>
+
+      <div className="content-wrapper detail-layout">
+        {/* Left: 3D Model Viewer */}
+        <div className="model-section detail-model">
+          <div className="status-badge">SYSTEM ACTIVE</div>
           <model-viewer
             src={product.glb}
             ios-src={product.usdz}
@@ -38,29 +42,46 @@ const ProductDetail = () => {
             ar-modes="webxr scene-viewer quick-look"
             camera-controls
             auto-rotate
-            style={{ width: '100%', height: 420, background: '#000' }}
+            shadow-intensity="2"
+            exposure="1.2"
+            environment-image="neutral"
+            style={{ width: '100%', height: '500px' }}
           >
             <button slot="ar-button" style={{ display: 'none' }} aria-hidden="true"></button>
           </model-viewer>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="btn btn-primary" onClick={openARFromPage}>Place in room (AR)</button>
-            <Link to="#/vr"><button className="btn btn-outline">Enter VR</button></Link>
-            <button className="btn btn-secondary" onClick={() => setShow360(s => !s)}>{show360 ? 'Hide 360' : '360 View'}</button>
+          <div className="action-bar">
+            <button className="btn btn-primary" onClick={openARFromPage}>PLACE IN SPACE (AR)</button>
+            <Link to="/vr"><button className="btn btn-outline">VIRTUAL COCKPIT</button></Link>
+            <button className="btn btn-secondary" onClick={() => setShow360(s => !s)}>
+              {show360 ? 'CLOSE VIEW' : '360° SENSOR'}
+            </button>
           </div>
         </div>
 
-        <div style={{ flex: '1 1 320px', minWidth: 260 }}>
-          <div style={{ background: '#0b0b0b', padding: 12, borderRadius: 8 }}>
-            <h3 style={{ marginTop: 0 }}>{product.price}</h3>
-            <p>{product.description}</p>
-          </div>
-
-          {show360 && (
-            <div style={{ marginTop: 12 }}>
-              <img src={product.image} alt={`${product.title} 360`} style={{ width: '100%', borderRadius: 8 }} />
+        {/* Right: Technical Specs Box */}
+        <div className="info-section">
+          <div className="glass-panel info-card">
+            <h2 className="detail-title">{product.title}</h2>
+            <div className="detail-price">{product.price}</div>
+            
+            <div className="divider"></div>
+            
+            <p className="detail-desc">{product.description}</p>
+            
+            <div className="tech-specs-list">
+              <div className="tech-row"><span>MODEL:</span> <span>CD-X7</span></div>
+              <div className="tech-row"><span>OS:</span> <span>DRONE-OS v4.2</span></div>
+              <div className="tech-row"><span>CONNECTIVITY:</span> <span>SAT-LINK</span></div>
             </div>
-          )}
+
+            {show360 && (
+              <div className="sensor-view-container fade-in">
+                <img src={product.image} alt="360 sensor view" className="sensor-img" />
+                <div className="scanline"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
