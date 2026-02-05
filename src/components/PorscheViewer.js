@@ -39,7 +39,7 @@ const CargoDroneViewer = () => {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>CARGO DRONE <span style={{fontSize: '0.5rem', verticalAlign: 'middle', opacity: 0.6}}>V1.0</span></h1>
+        <h1> VIRTUAL DRONE SHOWROOM  <span style={{fontSize: '0.5rem', verticalAlign: 'middle', opacity: 0.6}}>V1.0</span></h1>
       </header>
 
       <div className="content-wrapper">

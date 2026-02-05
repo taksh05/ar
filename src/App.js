@@ -29,7 +29,7 @@ const Home = () => {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Cargo Drone</h1>
+        <h1>VIRTUAL DRONE SHOWROOM </h1>
       </header>
 
       <div className="content-wrapper">
